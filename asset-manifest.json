@@ -1,15 +1,15 @@
 {
   "files": {
-    "main.css": "/insta-letterbox/static/css/main.034f13fc.css",
-    "main.js": "/insta-letterbox/static/js/main.c7eea639.js",
+    "main.css": "/insta-letterbox/static/css/main.8ded56ab.css",
+    "main.js": "/insta-letterbox/static/js/main.2565b008.js",
     "static/js/787.4ab8092d.chunk.js": "/insta-letterbox/static/js/787.4ab8092d.chunk.js",
     "index.html": "/insta-letterbox/index.html",
-    "main.034f13fc.css.map": "/insta-letterbox/static/css/main.034f13fc.css.map",
-    "main.c7eea639.js.map": "/insta-letterbox/static/js/main.c7eea639.js.map",
+    "main.8ded56ab.css.map": "/insta-letterbox/static/css/main.8ded56ab.css.map",
+    "main.2565b008.js.map": "/insta-letterbox/static/js/main.2565b008.js.map",
     "787.4ab8092d.chunk.js.map": "/insta-letterbox/static/js/787.4ab8092d.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.034f13fc.css",
-    "static/js/main.c7eea639.js"
+    "static/css/main.8ded56ab.css",
+    "static/js/main.2565b008.js"
   ]
 }

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import logo from "./logo.svg";
 import "./App.scss";
+const piexif = require("piexifjs");
 
 function App() {
   const [files, setFiles] = useState<File[]>([]);
@@ -19,6 +20,14 @@ function App() {
     },
     []
   );
+
+  const remove = useCallback((file: File) => {
+    setFiles(files.filter((f) => f.name !== file.name));
+  }, []);
+
+  const clear = useCallback(() => {
+    setFiles([]);
+  }, []);
 
   return (
     <div className="App">
@@ -42,10 +51,19 @@ function App() {
             onChange={onColorChange}
           />
         </div>
+        <div className="spacer" />
+        <div className="group">
+          <button onClick={clear}>Clear</button>
+        </div>
       </div>
       <div className="images">
         {files.map((file) => (
-          <ImageResizer key={file.name} imageFile={file} color={color} />
+          <ImageResizer
+            key={file.name}
+            onRemove={() => remove(file)}
+            imageFile={file}
+            color={color}
+          />
         ))}
       </div>
     </div>
@@ -55,16 +73,28 @@ function App() {
 interface ImageResizerProps {
   imageFile: File;
   color: string;
+  onRemove: () => void;
 }
 
 function ImageResizer(props: ImageResizerProps) {
-  const { imageFile, color } = props;
+  const { imageFile, color, onRemove } = props;
 
-  const [loading, setLoading] = useState(false);
+  const [loadingState, setLoadingState] = useState<
+    "init" | "loading" | "error" | "success"
+  >("init");
   const [dataUrl, setDataUrl] = useState("");
+  const [exifError, setExifError] = useState("");
 
   const onLoad = useCallback((e: ProgressEvent<FileReader>) => {
-    var img = document.createElement("img");
+    const img = document.createElement("img");
+
+    let exifObj = {};
+
+    try {
+      exifObj = piexif.load(e.target!.result);
+    } catch (e) {
+      setExifError(String(e));
+    }
 
     img.onload = function(event) {
       // picture dimensions
@@ -81,7 +111,7 @@ function ImageResizer(props: ImageResizerProps) {
       ctx.fillStyle = color;
       ctx.fillRect(0, 0, size, size);
 
-      // Actual resizing
+      // Centering the image
       ctx.drawImage(
         img,
         (size - width) / 2,
@@ -90,10 +120,18 @@ function ImageResizer(props: ImageResizerProps) {
         height
       );
 
-      // Show resized image in preview element
-      setDataUrl(canvas.toDataURL(imageFile.type));
+      let newDataUrl = canvas.toDataURL(imageFile.type);
 
-      setLoading(false);
+      try {
+        newDataUrl = piexif.insert(piexif.dump(exifObj), newDataUrl);
+      } catch (e) {
+        setExifError(String(e));
+      }
+
+      // Show resized image in preview element
+      setDataUrl(newDataUrl);
+
+      setLoadingState("success");
     };
 
     img.src = e.target!.result as any;
@@ -103,12 +141,12 @@ function ImageResizer(props: ImageResizerProps) {
   reader.onload = onLoad;
 
   useEffect(() => {
-    if (loading) {
+    if (loadingState) {
       reader.abort();
-      setLoading(false);
+      setLoadingState("init");
     }
 
-    setLoading(true);
+    setLoadingState("loading");
     reader.readAsDataURL(imageFile);
 
     return () => {
@@ -116,7 +154,7 @@ function ImageResizer(props: ImageResizerProps) {
     };
   }, [imageFile]);
 
-  if (loading) {
+  if (loadingState === "loading") {
     return (
       <div className="image-resizer loading">
         <div>Working...</div>
@@ -125,9 +163,20 @@ function ImageResizer(props: ImageResizerProps) {
   }
 
   return (
-    <a className="image-resizer" download={imageFile.name} href={dataUrl}>
-      <img id="preview" src={dataUrl} />
-    </a>
+    <div className="image-resizer">
+      <a download={imageFile.name} href={dataUrl}>
+        <img id="preview" src={dataUrl} />
+        {exifError && (
+          <div className="exif-error">Unable to read or write EXIF data</div>
+        )}
+      </a>
+      <div className="label" title={imageFile.name}>
+        {imageFile.name}
+      </div>
+      <div className="remove" onClick={onRemove}>
+        Remove
+      </div>
+    </div>
   );
 }
 
